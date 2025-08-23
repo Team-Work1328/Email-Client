@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 export default async function Home() {
-  return <h1 className="text-red-600">Home Pages</h1>;
+  return Button({ children: "Hello World" });
 }
