@@ -1,26 +1,30 @@
-// /api/clerk/webhook
+// /api/clerk/webhook/route.ts
 import { db } from "@/server/db";
 
 export const POST = async (req: Request) => {
   try {
-    const { data } = await req.json();
+    const body = await req.json();
 
-    // Safe access: if no email_addresses, fallback to empty string
-    const emailAddress = data.email_addresses?.[0]?.email_address || "";
+    console.log("📩 Full webhook body:", body);
 
-    const firstName = data.first_name || "";
-    const lastName = data.last_name || "";
-    const imageUrl = data.image_url || "";
-    const id = data.id;
+    const eventType = body.type;
+    const userData = body.data;
 
-    await db.user.upsert({
-      where: { id },
-      update: { emailAddress: emailAddress || undefined, firstName, lastName, imageUrl },
-      create: { id, emailAddress, firstName, lastName, imageUrl },
-    });
+    if (eventType === "user.created" || eventType === "user.updated") {
+      const emailAddress = userData.email_addresses?.[0]?.email_address || "";
+      const firstName = userData.first_name || "";
+      const lastName = userData.last_name || "";
+      const imageUrl = userData.image_url || "";
+      const id = userData.id;
 
-    console.log("✅ User upserted from Clerk webhook");
-    console.log("Clerk Webhook Data:", data);
+      await db.user.upsert({
+        where: { id },
+        update: { emailAddress, firstName, lastName, imageUrl },
+        create: { id, emailAddress, firstName, lastName, imageUrl },
+      });
+
+      console.log("✅ User upserted from Clerk webhook:", id);
+    }
 
     return new Response("Webhook received", { status: 200 });
   } catch (err) {
